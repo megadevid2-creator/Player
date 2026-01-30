@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        body { margin: 0; background: #000; height: 100vh; display: flex; align-items: center; }
+        .container { width: 100%; max-width: 1000px; margin: auto; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <video id="player" playsinline controls></video>
+</div>
+
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('url');
+    const video = document.getElementById('player');
+
+    if (source) {
+        const defaultOptions = {};
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(source);
+            hls.attachMedia(video);
+            window.hls = hls;
+        }
+        const player = new Plyr(video, defaultOptions);
+    } else {
+        document.body.innerHTML = "<h2 style='color:white; text-align:center;'>URL லிங்க் தேவை!</h2>";
+    }
+</script>
+</body>
+</html>
