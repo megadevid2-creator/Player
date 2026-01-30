@@ -3,38 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Fast Live TV Player</title>
+    <title>Premium Live TV Player</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* முழு பக்கத்தின் ஸ்டைல் - பிளேயரை மேலே கொண்டு வர Flex-start பயன்படுத்தப்பட்டுள்ளது */
         body { 
             background: radial-gradient(circle, #1a1a2e, #16213e, #0f3460); 
             display: flex; 
             flex-direction: column;
-            justify-content: flex-start; 
+            justify-content: flex-start; /* மேலே இருந்து தொடங்கும் */
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
-            padding-top: 20px;
+            padding-top: 20px; /* மேலே கொஞ்சம் இடைவெளி */
             font-family: 'Poppins', sans-serif;
             color: white;
-            overflow-x: hidden;
         }
 
         h2 { 
             margin-bottom: 15px; 
-            font-size: 20px;
+            font-size: 22px;
             letter-spacing: 2px; 
             text-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
         }
 
+        /* வீடியோ கண்டெய்னர் */
         .player-container {
             position: relative;
             width: 95%;
             max-width: 850px;
             padding: 8px;
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px); /* Glass effect */
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
@@ -45,30 +46,11 @@
             border-radius: 15px; 
             display: block;
             outline: none;
+            aspect-ratio: 16 / 9; /* சரியான வீடியோ வடிவம் */
             background: #000;
-            aspect-ratio: 16 / 9;
         }
 
-        /* லோடிங் ஸ்பின்னர் (Loading Spinner) */
-        #loader {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #fff;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            z-index: 20;
-        }
-
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
+        /* நேரலை குறியீடு (Live Badge) */
         .live-badge {
             position: absolute;
             top: 20px;
@@ -84,8 +66,11 @@
             z-index: 10;
         }
 
-        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
 
+        /* Error Message Style */
         .error-msg {
             margin-top: 50px;
             text-align: center;
@@ -97,63 +82,49 @@
 </head>
 <body>
 
-    <h2>LIVE TV PLAYER</h2>
+    <h2>VIDEO PLAYER</h2>
 
     <div class="player-container" id="mainContainer" style="display: none;">
-        <div id="loader"></div>
         <div class="live-badge">LIVE</div>
         <video id="video" controls autoplay playsinline></video>
     </div>
 
     <div id="errorArea" class="error-msg" style="display: none;">
-        <h3>வீடியோ லிங்க் தேவை!</h3>
-        <p>URL இறுதியில் <b>?url=YOUR_M3U8_LINK</b> எனச் சேர்க்கவும்.</p>
+        <h3>வீடியோ லிங்க் கிடைக்கவில்லை!</h3>
+        <p>URL-ன் பின்னால் <b>?url=YOUR_LINK</b> எனச் சேர்க்கவும்.</p>
     </div>
 
     <script>
+        // URL-ல் இருந்து வீடியோ லிங்க்கை எடுக்கிறது
         const urlParams = new URLSearchParams(window.location.search);
         const videoSrc = urlParams.get('url');
         const video = document.getElementById('video');
         const container = document.getElementById('mainContainer');
-        const loader = document.getElementById('loader');
         const errorArea = document.getElementById('errorArea');
 
-        // லோடிங் வேகத்தை அதிகரிக்க HLS Config
-        const hlsConfig = {
-            maxBufferLength: 10, 
-            maxMaxBufferLength: 20,
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 0
-        };
-
         if (videoSrc) {
-            container.style.display = 'block';
+            container.style.display = 'block'; // லிங்க் இருந்தால் பிளேயரை காட்டு
 
             if (Hls.isSupported()) {
-                const hls = new Hls(hlsConfig);
+                var hls = new Hls();
                 hls.loadSource(videoSrc);
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play();
+                    video.play().catch(() => {
+                        console.log("Auto-play blocked by browser. User interaction needed.");
+                    });
                 });
-                
-                // வீடியோ ஓடத் தொடங்கியதும் லோடரை மறைக்க
-                video.onplaying = () => { loader.style.display = 'none'; };
-                video.onwaiting = () => { loader.style.display = 'block'; };
-
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            }
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = videoSrc;
                 video.addEventListener('loadedmetadata', function() {
                     video.play();
-                    loader.style.display = 'none';
                 });
             }
         } else {
-            errorArea.style.display = 'block';
+            errorArea.style.display = 'block'; // லிங்க் இல்லை என்றால் எரர் காட்டு
         }
     </script>
 
 </body>
 </html>
-
