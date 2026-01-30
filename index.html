@@ -7,16 +7,15 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* முழு பக்கத்தின் ஸ்டைல் - பிளேயரை மேலே கொண்டு வர Flex-start பயன்படுத்தப்பட்டுள்ளது */
         body { 
             background: radial-gradient(circle, #1a1a2e, #16213e, #0f3460); 
             display: flex; 
             flex-direction: column;
-            justify-content: flex-start; /* மேலே இருந்து தொடங்கும் */
+            justify-content: flex-start; 
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
-            padding-top: 20px; /* மேலே கொஞ்சம் இடைவெளி */
+            padding-top: 20px; 
             font-family: 'Poppins', sans-serif;
             color: white;
         }
@@ -28,14 +27,50 @@
             text-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
         }
 
-        /* வீடியோ கண்டெய்னர் */
+        /* Input Section Styling */
+        .input-container {
+            width: 95%;
+            max-width: 850px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 25px;
+            border-radius: 10px;
+            border: none;
+            background: #e94560;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff2e63;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+        }
+
+        /* Player Styling */
         .player-container {
             position: relative;
             width: 95%;
             max-width: 850px;
             padding: 8px;
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px); /* Glass effect */
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
@@ -46,11 +81,10 @@
             border-radius: 15px; 
             display: block;
             outline: none;
-            aspect-ratio: 16 / 9; /* சரியான வீடியோ வடிவம் */
+            aspect-ratio: 16 / 9;
             background: #000;
         }
 
-        /* நேரலை குறியீடு (Live Badge) */
         .live-badge {
             position: absolute;
             top: 20px;
@@ -66,63 +100,61 @@
             z-index: 10;
         }
 
-        @keyframes blink {
-            50% { opacity: 0.5; }
-        }
-
-        /* Error Message Style */
-        .error-msg {
-            margin-top: 50px;
-            text-align: center;
-            padding: 20px;
-            background: rgba(255, 0, 0, 0.1);
-            border-radius: 10px;
-        }
+        @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
-    <h2>VIDEO PLAYER</h2>
+    <h2>PREMIUM LIVE TV</h2>
+
+    <div class="input-container">
+        <input type="text" id="streamUrl" placeholder="Paste your stream URL (m3u8) here...">
+        <button onclick="playStream()">PLAY</button>
+    </div>
 
     <div class="player-container" id="mainContainer" style="display: none;">
         <div class="live-badge">LIVE</div>
         <video id="video" controls autoplay playsinline></video>
     </div>
 
-    <div id="errorArea" class="error-msg" style="display: none;">
-        <h3>வீடியோ லிங்க் கிடைக்கவில்லை!</h3>
-        <p>URL-ன் பின்னால் <b>?url=YOUR_LINK</b> எனச் சேர்க்கவும்.</p>
-    </div>
-
     <script>
-        // URL-ல் இருந்து வீடியோ லிங்க்கை எடுக்கிறது
-        const urlParams = new URLSearchParams(window.location.search);
-        const videoSrc = urlParams.get('url');
         const video = document.getElementById('video');
         const container = document.getElementById('mainContainer');
-        const errorArea = document.getElementById('errorArea');
+        const streamInput = document.getElementById('streamUrl');
+        let hls = new Hls();
 
-        if (videoSrc) {
-            container.style.display = 'block'; // லிங்க் இருந்தால் பிளேயரை காட்டு
+        function playStream() {
+            const videoSrc = streamInput.value.trim();
 
-            if (Hls.isSupported()) {
-                var hls = new Hls();
-                hls.loadSource(videoSrc);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play().catch(() => {
-                        console.log("Auto-play blocked by browser. User interaction needed.");
+            if (videoSrc) {
+                container.style.display = 'block'; // பிளேயரை காட்டு
+
+                if (Hls.isSupported()) {
+                    hls.destroy(); // பழைய ஸ்ட்ரீமை நீக்கு
+                    hls = new Hls();
+                    hls.loadSource(videoSrc);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        video.play();
                     });
-                });
+                } 
+                else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = videoSrc;
+                    video.addEventListener('loadedmetadata', function() {
+                        video.play();
+                    });
+                }
+            } else {
+                alert("தயவுசெய்து ஒரு URL-ஐ உள்ளிடவும்!");
             }
-            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = videoSrc;
-                video.addEventListener('loadedmetadata', function() {
-                    video.play();
-                });
-            }
-        } else {
-            errorArea.style.display = 'block'; // லிங்க் இல்லை என்றால் எரர் காட்டு
+        }
+
+        // URL Query மூலமும் வேலை செய்யும் (பழைய வசதிக்காக)
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryUrl = urlParams.get('url');
+        if (queryUrl) {
+            streamInput.value = queryUrl;
+            playStream();
         }
     </script>
 
