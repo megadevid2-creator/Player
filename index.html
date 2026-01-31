@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium  Player</title>
+    <title>Premium Hybrid Player</title>
     
     <link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -11,146 +11,114 @@
     <style>
         body { 
             background: radial-gradient(circle, #1a1a2e, #16213e, #0f3460); 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding-top: 20px; 
-            font-family: 'Poppins', sans-serif;
-            color: white;
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; margin: 0; padding-top: 20px; 
+            font-family: 'Poppins', sans-serif; color: white;
         }
 
-        h2 { 
-            margin-bottom: 15px; 
-            font-size: 22px;
-            letter-spacing: 2px; 
-            text-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
-        }
+        h2 { margin-bottom: 15px; letter-spacing: 2px; }
 
-        .input-container {
-            width: 95%;
-            max-width: 850px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
+        .input-container { width: 92%; max-width: 600px; margin-bottom: 20px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 10px; border: none; background: rgba(255, 255, 255, 0.1); color: white; outline: none; }
+        button { padding: 10px 25px; border-radius: 10px; border: none; background: #e94560; color: white; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        button:hover { background: #ff2e63; }
 
-        input[type="text"] {
-            flex: 1;
-            padding: 12px 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            outline: none;
-        }
-
-        button#playBtn {
-            padding: 10px 25px;
-            border-radius: 10px;
-            border: none;
-            background: #e94560;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* Player Container Style */
-        .player-container {
-            position: relative;
-            width: 92%;
-            max-width: 500px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .player-wrapper {
+            position: relative; width: 92%; max-width: 500px; padding: 10px;
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            margin-bottom: 25px;
         }
 
-        /* Video.js UI Fixes */
-        .video-js {
-            width: 100% !important;
-            height: auto !important;
-            aspect-ratio: 16 / 9;
-            border-radius: 12px;
+        /* Container Switching */
+        #vjs-container, #native-container { display: none; width: 100%; }
+
+        .video-js, #native-video { 
+            width: 100% !important; 
+            border-radius: 15px; 
+            aspect-ratio: 16 / 9; 
+            background: #000;
             overflow: hidden;
         }
 
-        /* Quality selector button alignment fix */
-        .vjs-quality-selector {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-
-        .vjs-menu-button-popup .vjs-menu {
-            left: -3em !important; /* Menu சரியாகத் தெரிய */
-        }
-
+        /* Live Badge Style */
         .live-badge {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            background: #ff0000;
-            padding: 4px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            font-weight: bold;
-            box-shadow: 0 0 10px #ff0000;
-            z-index: 10;
-            pointer-events: none;
+            position: absolute; top: 25px; left: 25px; background: #ff0000;
+            padding: 4px 12px; border-radius: 5px; font-size: 11px; font-weight: bold;
+            box-shadow: 0 0 10px #ff0000; z-index: 100; display: none;
+            text-transform: uppercase; pointer-events: none;
         }
+
+        /* Quality selector button alignment fix */
+        .vjs-quality-selector { display: flex !important; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <h2>PREMIUM PLAYER</h2>
+    <h2>PREMIUM VIDEO PLAYER</h2>
 
     <div class="input-container">
-        <input type="text" id="streamUrl" placeholder="Paste m3u8 or mpd URL here...">
-        <button id="playBtn" onclick="playStream()">PLAY</button>
+        <input type="text" id="streamUrl" placeholder="Paste m3u8, mpd, mp4 or mkv link...">
+        <button onclick="playMedia()">PLAY</button>
     </div>
 
-    <div class="player-container" id="mainContainer">
-        <div class="live-badge">LIVE</div>
-        <video id="video-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
+    <div class="player-wrapper">
+        <div id="live-badge" class="live-badge">LIVE</div>
+        
+        <div id="vjs-container">
+            <video id="vjs-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
+        </div>
+
+        <div id="native-container">
+            <video id="native-video" controls playsinline preload="metadata"></video>
+        </div>
     </div>
 
     <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-quality-levels@4.0.0/dist/videojs-contrib-quality-levels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/videojs-hls-quality-selector@2.0.0/dist/videojs-hls-quality-selector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        // பிளேயர் செட்டப்
-        var player = videojs('video-player', {
-            liveui: true,
-            responsive: true,
+        // Video.js Setup with Quality Selector
+        const vjsPlayer = videojs('vjs-player', { 
             fluid: true,
             playbackRates: [0.5, 1, 1.5, 2]
         });
+        vjsPlayer.hlsQualitySelector({ displayCurrentQuality: true });
 
-        // குவாலிட்டி ஆப்ஷன் பிளகின்
-        player.hlsQualitySelector({
-            displayCurrentQuality: true,
-        });
-
-        function playStream() {
+        const nativeVideo = document.getElementById('native-video');
+        const liveBadge = document.getElementById('live-badge');
+        
+        function playMedia() {
             const url = document.getElementById('streamUrl').value.trim();
-            if (url) {
-                document.getElementById('mainContainer').style.display = 'block';
-                
-                let type = "application/x-mpegURL";
-                if (url.includes(".mpd")) {
-                    type = "application/dash+xml";
-                }
+            if (!url) return alert("URL-ஐ உள்ளிடவும்!");
 
-                player.src({ src: url, type: type });
-                player.play();
-            } else {
-                alert("URL-ஐ உள்ளிடவும்!");
+            // Resetting Players
+            vjsPlayer.pause();
+            nativeVideo.pause();
+            nativeVideo.src = "";
+            
+            document.getElementById('vjs-container').style.display = 'none';
+            document.getElementById('native-container').style.display = 'none';
+            liveBadge.style.display = 'none';
+
+            if (url.includes(".m3u8") || url.includes(".mpd")) {
+                // --- LIVE MODE (Video.js) ---
+                document.getElementById('vjs-container').style.display = 'block';
+                liveBadge.style.display = 'block';
+                
+                let type = url.includes(".m3u8") ? "application/x-mpegURL" : "application/dash+xml";
+                vjsPlayer.src({ src: url, type: type });
+                vjsPlayer.play();
+            } 
+            else {
+                // --- VIDEO MODE (Native Fast Player) ---
+                document.getElementById('native-container').style.display = 'block';
+                
+                // Native பிளேயரில் சீக்கிங் (Seeking) வேகமாக இருக்க metadata மட்டும் முதலில் லோட் செய்யப்படும்
+                nativeVideo.src = url;
+                nativeVideo.play().catch(e => console.log("Native playback started."));
             }
         }
     </script>
