@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Live TV Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <title>Premium  Player</title>
+    
+    <link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
     <style>
         body { 
             background: radial-gradient(circle, #1a1a2e, #16213e, #0f3460); 
             display: flex; 
             flex-direction: column;
-            justify-content: flex-start; 
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
@@ -27,7 +28,6 @@
             text-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
         }
 
-        /* Input Section Styling */
         .input-container {
             width: 95%;
             max-width: 850px;
@@ -44,10 +44,9 @@
             background: rgba(255, 255, 255, 0.1);
             color: white;
             outline: none;
-            font-size: 14px;
         }
 
-        button {
+        button#playBtn {
             padding: 10px 25px;
             border-radius: 10px;
             border: none;
@@ -55,108 +54,104 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
         }
 
-        button:hover {
-            background: #ff2e63;
-            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
-        }
-
-        /* Player Styling */
+        /* Player Container Style */
         .player-container {
             position: relative;
             width: 95%;
             max-width: 850px;
-            padding: 8px;
+            padding: 10px;
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: none;
         }
 
-        video { 
-            width: 100%; 
-            border-radius: 15px; 
-            display: block;
-            outline: none;
+        /* Video.js UI Fixes */
+        .video-js {
+            width: 100% !important;
+            height: auto !important;
             aspect-ratio: 16 / 9;
-            background: #000;
+            border-radius: 15px;
+        }
+
+        /* Quality selector button alignment fix */
+        .vjs-quality-selector {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .vjs-menu-button-popup .vjs-menu {
+            left: -3em !important; /* Menu சரியாகத் தெரிய */
         }
 
         .live-badge {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 25px;
+            left: 25px;
             background: #ff0000;
             padding: 4px 10px;
             border-radius: 5px;
             font-size: 11px;
             font-weight: bold;
-            text-transform: uppercase;
             box-shadow: 0 0 10px #ff0000;
-            animation: blink 1.5s infinite;
             z-index: 10;
+            pointer-events: none;
         }
-
-        @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
-    <h2>VIDEO PLAYER</h2>
+    <h2>PREMIUM PLAYER</h2>
 
     <div class="input-container">
-        <input type="text" id="streamUrl" placeholder="Paste your stream URL here...">
-        <button onclick="playStream()">PLAY</button>
+        <input type="text" id="streamUrl" placeholder="Paste m3u8 or mpd URL here...">
+        <button id="playBtn" onclick="playStream()">PLAY</button>
     </div>
 
-    <div class="player-container" id="mainContainer" style="display: none;">
+    <div class="player-container" id="mainContainer">
         <div class="live-badge">LIVE</div>
-        <video id="video" controls autoplay playsinline></video>
+        <video id="video-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
     </div>
+
+    <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-quality-levels@4.0.0/dist/videojs-contrib-quality-levels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-hls-quality-selector@2.0.0/dist/videojs-hls-quality-selector.min.js"></script>
 
     <script>
-        const video = document.getElementById('video');
-        const container = document.getElementById('mainContainer');
-        const streamInput = document.getElementById('streamUrl');
-        let hls = new Hls();
+        // பிளேயர் செட்டப்
+        var player = videojs('video-player', {
+            liveui: true,
+            responsive: true,
+            fluid: true,
+            playbackRates: [0.5, 1, 1.5, 2]
+        });
+
+        // குவாலிட்டி ஆப்ஷன் பிளகின்
+        player.hlsQualitySelector({
+            displayCurrentQuality: true,
+        });
 
         function playStream() {
-            const videoSrc = streamInput.value.trim();
-
-            if (videoSrc) {
-                container.style.display = 'block'; // பிளேயரை காட்டு
-
-                if (Hls.isSupported()) {
-                    hls.destroy(); // பழைய ஸ்ட்ரீமை நீக்கு
-                    hls = new Hls();
-                    hls.loadSource(videoSrc);
-                    hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        video.play();
-                    });
-                } 
-                else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = videoSrc;
-                    video.addEventListener('loadedmetadata', function() {
-                        video.play();
-                    });
+            const url = document.getElementById('streamUrl').value.trim();
+            if (url) {
+                document.getElementById('mainContainer').style.display = 'block';
+                
+                let type = "application/x-mpegURL";
+                if (url.includes(".mpd")) {
+                    type = "application/dash+xml";
                 }
+
+                player.src({ src: url, type: type });
+                player.play();
             } else {
-                alert("தயவுசெய்து ஒரு URL-ஐ உள்ளிடவும்!");
+                alert("URL-ஐ உள்ளிடவும்!");
             }
         }
-
-        // URL Query மூலமும் வேலை செய்யும் (பழைய வசதிக்காக)
-        const urlParams = new URLSearchParams(window.location.search);
-        const queryUrl = urlParams.get('url');
-        if (queryUrl) {
-            streamInput.value = queryUrl;
-            playStream();
-        }
     </script>
-
 </body>
 </html>
